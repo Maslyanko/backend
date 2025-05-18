@@ -1,9 +1,10 @@
+// ==== File: backend/server.js ====
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
-const fileUpload = require('express-fileupload'); // Добавляем модуль для загрузки файлов
+const path = require('path'); // <--- ИСПРАВИТЬ ОПЕЧАТКУ ЗДЕСЬ
+const fileUpload = require('express-fileupload');
 const config = require('./config/config');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -17,8 +18,6 @@ const app = express();
 
 // Middleware
 app.use(cors());
-
-// Настройка helmet с учетом необходимости загрузки изображений
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -29,19 +28,14 @@ app.use(
     },
   })
 );
-
 app.use(morgan('dev'));
 app.use(express.json());
-
-// Middleware для загрузки файлов
 app.use(fileUpload({
   createParentPath: true,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB макс. размер файла
+  limits: { fileSize: 5 * 1024 * 1024 },
   abortOnLimit: true,
   responseOnLimit: 'Файл слишком большой (макс. 5MB)'
 }));
-
-// Статические файлы
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Routes
@@ -49,13 +43,15 @@ app.use('/v1/auth', authRoutes);
 app.use('/v1/users', userRoutes);
 app.use('/v1/courses', courseRoutes);
 
-// Error handling middleware
 app.use(errorHandler);
 
-// Start server
-const PORT = config.port || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = config.port || 5000; // Используем переменную PORT из config
 
-module.exports = app;
+// Start server only if this file is run directly (not required by another module like tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app; // Экспортируем app для тестов
